@@ -1,0 +1,21 @@
+<main class="centralize vertical">
+    <form [formGroup]="form">
+        <div class="form-field">
+            <label>Email</label>
+            <input type="email" formControlName="email">
+        </div>
+        <div class="form-field">
+            <label>Senha</label>
+            <input type="password" formControlName="password">
+        </div>
+        <button type="button" class="clear" [disabled]="!form.get('email')?.valid"
+            test-id="recover-password-button">
+            Recuperar senha
+        </button>
+        <button type="button" class="solid" [disabled]="!form.valid" (click)="login()"
+            test-id="login-button">
+            Login
+        </button>
+        <button type="button" class="outline">Cadastro</button>
+    </form>
+</main>

@@ -1,1 +1,5 @@
-# tdd-unit-tests-angular
+Instalar as dependências:
+npm install
+
+Executar o projeto:
+npm start

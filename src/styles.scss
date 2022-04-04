@@ -1,0 +1,57 @@
+body {
+    margin: 0;
+    background: #2dd36f;
+}
+
+input,
+button {
+    padding: 12px 16px;
+    width: -webkit-fill-available;
+}
+label {
+    color: white;
+}
+button {
+    border: none;
+    margin: 4px 0;
+    font-weight: 600;
+}
+button[disabled] {
+    opacity: 0.7;
+}
+button:active {
+    opacity: 0.8;
+}
+button.clear {
+    background: transparent;
+    color: white;
+}
+button.solid {
+    background: white;
+    color: #2dd36f;
+}
+button.outline {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+}
+
+main {
+    min-height: 100vh;
+}
+
+.form-field {
+    width: -webkit-fill-available;
+    input {
+        margin: 4px 0 8px 0;
+    }
+}
+
+.centralize {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.centralize.vertical {
+    flex-direction: column;
+}
