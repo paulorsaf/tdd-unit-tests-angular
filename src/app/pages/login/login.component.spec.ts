@@ -2,22 +2,23 @@ import { Location } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
-import { AuthService } from 'src/app/services/auth/auth.service';
+import { Store, StoreModule } from '@ngrx/store';
 import { MessageService } from 'src/app/services/message/message.service';
+import { AppState } from 'src/app/store/app-state';
+import { loginFail, loginSuccess } from 'src/app/store/login/login.actions';
+import { loginReducer } from 'src/app/store/login/login.reducers';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let location: Location;
-  let authService: AuthServiceMock;
   let messageService: MessageServiceMock;
+  let store: Store<AppState>;
 
   let page: {querySelector: Function, querySelectorAll: Function};
 
   beforeEach(async () => {
-    authService = new AuthServiceMock();
     messageService = new MessageServiceMock();
 
     await TestBed.configureTestingModule({
@@ -25,14 +26,15 @@ describe('LoginComponent', () => {
         LoginComponent
       ],
       imports: [
+        StoreModule.forRoot([]),
+        StoreModule.forFeature('login', loginReducer),
         ReactiveFormsModule,
         RouterTestingModule.withRoutes([{
           path: 'home',
           loadChildren: () => import('../home/home.module').then( m => m.HomeModule)
-        }])
+        }]),
       ]
     })
-    .overrideProvider(AuthService, {useValue: authService})
     .overrideProvider(MessageService, {useValue: messageService})
     .compileComponents();
   });
@@ -41,6 +43,7 @@ describe('LoginComponent', () => {
     fixture = TestBed.createComponent(LoginComponent);
     location = TestBed.get(Location);
     messageService = TestBed.get(MessageService);
+    store = TestBed.get(Store);
     
     component = fixture.componentInstance;
     page = fixture.debugElement.nativeElement;
@@ -112,6 +115,10 @@ describe('LoginComponent', () => {
     expect(page.querySelector('[test-id="login-button"]').disabled).toBeTruthy();
   })
 
+  it('given user is not logging in, then hide loading', () => {
+    expect(page.querySelector('[test-id="login-loading"]')).toBeNull();
+  })
+
   describe("given user clicks on login button", () => {
 
     beforeEach(() => {
@@ -119,25 +126,64 @@ describe('LoginComponent', () => {
       setPassword('anyPassword');
     })
 
-    it('given user clicks on login button, when success, then go to home page', done => {
-      authService._response = of({});
-  
+    it('then should login', done => {
       page.querySelector('[test-id="login-button"]').click();
       fixture.detectChanges();
   
-      setTimeout(() => {
-        expect(location.path()).toEqual('/home');
+      store.select('login').subscribe(state => {
+        expect(state.isLoggingIn).toBeTruthy();
         done();
-      }, 100);
+      })
     })
-  
-    it('given user clicks on login button, when fail, then show error message', () => {
-      authService._response = throwError({error: "error"});
-  
+
+    it('then show loading', () => {
       page.querySelector('[test-id="login-button"]').click();
       fixture.detectChanges();
   
-      expect(messageService._isErrorShown).toBeTruthy();
+      expect(page.querySelector('[test-id="login-loading"]')).not.toBeNull();
+    })
+
+    describe("when login success", () => {
+
+      beforeEach(() => {
+        page.querySelector('[test-id="login-button"]').click();
+        fixture.detectChanges();
+
+        store.dispatch(loginSuccess());
+        fixture.detectChanges();
+      })
+
+      it('then go to home page', done => {
+        setTimeout(() => {
+          expect(location.path()).toEqual('/home');
+          done();
+        }, 100);
+      })
+  
+      it('then hide loading', () => {
+        expect(page.querySelector('[test-id="login-loading"]')).toBeNull();
+      })
+
+    })
+
+    describe('when fail', () => {
+
+      beforeEach(() => {
+        page.querySelector('[test-id="login-button"]').click();
+        fixture.detectChanges();
+  
+        store.dispatch(loginFail({error: {error: "error"}}));
+        fixture.detectChanges();
+      })
+  
+      it('then show error message', () => {
+        expect(messageService._isErrorShown).toBeTruthy();
+      })
+  
+      it('then hide loading', () => {
+        expect(page.querySelector('[test-id="login-loading"]')).toBeNull();
+      })
+
     })
 
   })
@@ -150,14 +196,6 @@ describe('LoginComponent', () => {
   function setPassword(password: string) {
     component.form.get('password')!.setValue(password);
     fixture.detectChanges();
-  }
-
-  class AuthServiceMock {
-    _response: any;
-
-    login() {
-      return this._response;
-    }
   }
 
   class MessageServiceMock {

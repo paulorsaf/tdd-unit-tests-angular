@@ -14,7 +14,8 @@
         </button>
         <button type="button" class="solid" [disabled]="!form.valid" (click)="login()"
             test-id="login-button">
-            Login
+            <span *ngIf="!(isLoggingIn$ | async)">Login</span>
+            <span *ngIf="(isLoggingIn$ | async)" test-id="login-loading">Carregando...</span>
         </button>
         <button type="button" class="outline">Cadastro</button>
     </form>
